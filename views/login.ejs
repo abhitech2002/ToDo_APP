@@ -1,23 +1,24 @@
 <%- include("partials/header.ejs") %>
 
-    <div class="container mt-3">
+    <div class="container mt-3" style="background-color: black;">
         <div class="row">
             <div class="col">
-                <h3 class="my-2">Login Here</h3>
+                <h3 class="my-2" style="color: blue;">Login Here</h3>
                     <form id="loginSubmitForm">
                         <div class="mb-3">
-                            <label class="form-label" for="email">Enter Email:</label>
+                            <label class="form-label" for="email" style="color: rgb(250, 246, 246);">Enter Email:</label>
                             <input class="form-control" type="text" name="email" id="email"
                                 placeholder="john@test.com" required/>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label" for="password">Enter Password:</label>
+                            <label class="form-label" for="password" style="color: rgb(250, 246, 246);">Enter Password:</label>
                             <input class="form-control" type="password" name="password" id="password"
                                 placeholder="John4567@7784" required/>
                         </div>
                         <div class="text-center" style="width: 100%;">
-                            <input class="btn btn-primary my-3" type="submit" style="width: 50%;" />
+                            <input class="btn btn-primary my-3" type="submit" style="width: 50%;" value="Login"/>
                         </div>
+                        <p style="color: rgb(250, 246, 246);">Are you already not registered: Then click on <a href="/auth/register">Register ?</a></p>
                         <hr />
                     </form>
             </div>
@@ -53,9 +54,10 @@
                         const errorString = JSON.stringify(data.error)
                         alert(errorString)
                     } else {
-                        console.log("------------------- ", data)
+                        // console.log("------------------- ", data)
                         localStorage.setItem("access_token", data.data.access_token)
                         alert(data.message)
+                        window.location.href = "http://localhost:3000/"; // Redirect to home page
                     }
                 })
                 .catch((error) => alert(error))

@@ -80,6 +80,7 @@ router.post("/register",
                         password: hashPassword   // To store the hashed password 
                     }
                    
+                    // req.session.user = newUser
                         readUser()
                         .then((data)=> {
                             data.push(newUser)
@@ -132,7 +133,7 @@ router.post("/login", async(req, res) => {
                     })
         } 
     
-        // Compairing Password of exist password and user password
+        
         const passwordMatch = await bcrypt.compare(password, user.password)
 
         if(!passwordMatch) {
@@ -144,10 +145,12 @@ router.post("/login", async(req, res) => {
                     })
         }
 
+        req.session.isLoggedIN = true
+        req.session.user =user
         // create access tokens response to clientjwt npm
 
         const token = JWT.sign({ email }, SECRET)
-
+        
         return res.status(200)
         .json({
             message: "User login successful.",
@@ -156,6 +159,8 @@ router.post("/login", async(req, res) => {
                     access_token: token
                 }
         })
+        
+
     }
     catch(error){
         console.error("Error in login:", error)
