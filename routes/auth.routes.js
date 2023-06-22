@@ -1,12 +1,18 @@
 const express = require("express")
-const { body, validationResult } = require("express-validator")
+const { body, validationResult } = require("express-validator") // for authorization 
 const JWT = require("jsonwebtoken")
 const { SECRET } = require("../config")
 const router = express.Router()
+const fs = require("fs/promises")
+const { readUser } = require("../utils/utils")
+const bcrypt = require("bcryptjs") // TO hash the password
+const { hash } = require("bcrypt")
+const { error } = require("console")
 
+// replacing USER array with users.json
+// const USER = []
 
-const USER = []
-
+// Register 
 router.post("/register",
     body("name")
         .custom((name) => {
@@ -17,7 +23,7 @@ router.post("/register",
         })
         .withMessage("Name should be of minimum 5 characters."),
     body("email")
-    .isEmail()
+    .isEmail()  // inbuild function for email
         .withMessage("Enter email in proper format."),
     body("password")
         .custom((password) => {
@@ -27,83 +33,137 @@ router.post("/register",
             return false
         })
         .withMessage("Password should be of minimum 8 characters."),
-    (req, res) => {
+        async(req, res) => {
 
-        const { name, email, password } = req.body
+            const { name, email, password } = req.body
+            // const userData = req.body
 
-        const errors = validationResult(req)
+            const errors = validationResult(req) // Using express validator
 
-        if (!errors.isEmpty()) {
-            return res.status(400)
-                .json({
-                    message: "User registeration failed.",
-                    error: errors.array(),
-                    data: {}
-                })
-        }
-
-        USER.push(
-            {
-                name,
-                email,
-                password
+            if (!errors.isEmpty()) {
+                return res.status(400)
+                    .json({
+                        message: "User registeration failed.",
+                        error: errors.array(),
+                        data: {}
+                    })
             }
-        )
+            try {
+                // Check if password is valid
+                if (typeof password !== "string") {
+                    return res
+                    .status(400)
+                    .json({
+                    message: "User registration failed.",
+                    error: "Invalid password format.",
+                    data: {},
+                    });
+                }
+                    // Hash the password
+                    const hashPassword = await bcrypt.hash(req.body.password, 10); // To genrate a  hash    
 
-        return res.status(201).json({
-            message: "User registeration successful.",
-            error: null,
-            data: {}
-        })
-    })
+                    const userData = await readUser()
 
-router.post("/login", (req, res) => {
+                    const existingUser = userData.find((user) => user.email ===email)
+                    if(existingUser){
+                        return res.status(400)
+                        .json({
+                            message:"User registration failed.",
+                            error: "User already exist",
+                            data : {}
+                        })
+                    }
+
+                    const newUser = {
+                        name, 
+                        email, 
+                        password: hashPassword   // To store the hashed password 
+                    }
+                   
+                        readUser()
+                        .then((data)=> {
+                            data.push(newUser)
+                            // writing the updated data to the users array to the files
+                            return fs.writeFile("users.json", JSON.stringify(data))
+                        })
+                        return res.status(201).json({
+                            message: "User registeration successful.",
+                            error: null,
+                            data: {}
+                        })
+                }
+                catch(error){
+                    console.log("Error in User registeration", error)
+                    return res.status(500).json({
+                        message: "User registeration failes",
+                        error: "server failed",
+                        data: {}
+                    })
+                }
+
+            }
+            // Due to users.json USER.push now uncessary
+            // USER.push(
+            //     {
+            //         name,
+            //         email,
+            //         password
+            //     }
+            // )   
+)   
+
+// Login 
+router.post("/login", async(req, res) => {
     const { email, password } = req.body 
 
     console.log("---user info ---", email, password)
+    try{
+        const user_data = await readUser() // REad user data from users,json
 
-    if (USER.length <=0 ) {
-        return res.status(400)
-                .json({
-                    message: "User login failed.",
-                    error: "User does not exists.",
-                    data: {}
-                })
-    } 
+        // finding users by email
+        const user = user_data.find((user)=>user.email === email)
 
-    const userIndex = USER.findIndex((user) => user.email === email)
+        if (!user && user_data.length <=0 ) {
+            return res.status(400)
+                    .json({
+                        message: "User login failed.",
+                        error: "User does not exists.",
+                        data: {}
+                    })
+        } 
+    
+        // Compairing Password of exist password and user password
+        const passwordMatch = await bcrypt.compare(password, user.password)
 
-    if(userIndex === -1 ) {
-        return res.status(404)
-                .json({
-                    message: "User login failed.",
-                    error: "User not found.",
-                    data: {}
-                })
-    }
+        if(!passwordMatch) {
+            return res.status(404)
+                    .json({
+                        message: "User login failed.",
+                        error: "Invalid Password",
+                        data: {}
+                    })
+        }
 
-    if(USER[userIndex].password !== password) {
-        return res.status(404)
+        // create access tokens response to clientjwt npm
+
+        const token = JWT.sign({ email }, SECRET)
+
+        return res.status(200)
         .json({
-            message: "User login failed.",
-            error: "Invalid password.",
-            data: {}
+            message: "User login successful.",
+                error: null,
+                data: {
+                    access_token: token
+                }
         })
     }
-
-    // create access tokens
-    // response to clientjwt npm
-
-    const token = JWT.sign({ email }, SECRET)
-
-    return res.status(200)
-    .json({
-        message: "User login successful.",
-            error: null,
-            data: {
-                access_token: token
-            }
-    })
+    catch(error){
+        console.error("Error in login:", error)
+        return res.status(500).json({
+            message: "Internal server error.",
+            error: "Failed to log in user.",
+            data: {},
+          });
+    }
 })
-
 module.exports = router

@@ -4,8 +4,9 @@ const fs = require("fs/promises")
 const { body, validationResult } = require("express-validator")
 const { isAuthenticated } = require("../middlewares")
 
-const todoRouter = express.Router()
+const todoRouter = express.Router() // Router for Todo
 
+// Get for all 
 todoRouter.get("/", (req, res) => {
     return utils.readData()
         .then((data) => {
@@ -17,9 +18,10 @@ todoRouter.get("/", (req, res) => {
         })
 })
 
+// Post Todo
 todoRouter.post(
     "/",
-    isAuthenticated,
+    isAuthenticated, // Middleware
     body("title").custom((title) => {
         if (typeof title === "string" && title.length >= 3) {
             return true
@@ -70,7 +72,8 @@ todoRouter.post(
             })
     })
 
-todoRouter.get("/:title", (req, res) => {
+    // Get with title
+todoRouter.get("/:title", isAuthenticated, (req, res) => {
     const title = req.params.title.toLowerCase()
 
     return utils.readData()
@@ -88,7 +91,8 @@ todoRouter.get("/:title", (req, res) => {
         })
 })
 
-todoRouter.put("/:title", (req, res) => {
+// Update using title
+todoRouter.put("/:title", isAuthenticated, (req, res) => {
     const title = req.params.title.toLowerCase()
     const updateTodo = req.body
 
@@ -117,7 +121,8 @@ todoRouter.put("/:title", (req, res) => {
         })
 })
 
-todoRouter.delete("/:title", (req, res) => {
+// Delete using title
+todoRouter.delete("/:title", isAuthenticated, (req, res) => {
     const title = req.params.title.toLowerCase()
     let deletedObj
 

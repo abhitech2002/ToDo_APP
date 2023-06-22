@@ -4,6 +4,7 @@ const { isAuthenticated } = require("../middlewares")
 
 const router = express.Router()
 
+// Get
 router.get("", (req, res) => {
     return utils.readData()
         .then((dataArr) => {
@@ -11,10 +12,12 @@ router.get("", (req, res) => {
         })
 })
 
+// Get to add todo
 router.get("/todos/add",(req, res) => {
     return res.render("todo_add", { title: "Add" })
 })
 
+// Get with title
 router.get("/todos/:title", (req, res) => {
     const title = req.params.title.toLowerCase()
 
@@ -25,10 +28,13 @@ router.get("/todos/:title", (req, res) => {
         })
 })
 
+// For register
 router.get("/auth/register", (req, res) => {
     return res.render("register", { title: "Register" })
 })
 
+
+// For login
 router.get("/auth/login", (req, res) => {
     return res.render("login", { title: "Login" })
 })

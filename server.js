@@ -17,7 +17,7 @@ app.use(middlewares.logger)
 app.use(express.json())
 
 // hello world API call for our server/app
-app.get("/greetings", (req, res) => {
+app.get("/greet", (req, res) => {
     return res.send("Greetings from Todo App.")
 })
 

@@ -8,6 +8,22 @@ function readData() {
     })
 }
 
+// For store information in JSON Format
+
+function readUser(){
+    return fs
+    .readFile("users.json", "utf8")
+    .then((data) => {
+        if(data){
+            return JSON.parse(data.toString())
+        }else{
+            return []
+        }
+        
+    })
+}
+
 module.exports = {
-    readData
+    readData,
+    readUser
 }
